@@ -1,4 +1,10 @@
 terraform {
+  backend "remote" {
+    organization = "ddl-infra-21fall"
+    workspaces {
+      name = "Example-Workspace"
+    }
+  }
   required_providers {
     aws = {
       source  = "hashicorp/aws" # defines an optional hostname, a namespace, and the provider type

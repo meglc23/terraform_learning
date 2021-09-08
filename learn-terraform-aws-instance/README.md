@@ -22,6 +22,11 @@ The output values will be printed to the screen. Can also run:
 ```
 terraform output
 ```
+### Store Remote State
+log in to terraform cloud, update main.tf.
+```
+terraform apply
+```
 
 ### Resource
 https://learn.hashicorp.com/tutorials/terraform/aws-build?in=terraform/aws-get-started
