@@ -21,19 +21,35 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"] # Canonical
 }
 
+resource "random_id" "id" {
+  byte_length = 8
+} 
+
+locals {
+  name  = (var.name != "" ? var.name : random_id.id.hex)
+  owner = var.team
+  common_tags = {
+    Owner = local.owner
+    Name  = local.name
+  }
+}
+
 resource "aws_vpc" "my_vpc" {
   cidr_block           = var.cidr_vpc
   enable_dns_support   = true
   enable_dns_hostnames = true
+  tags = local.common_tags
 }
 
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.my_vpc.id
+  tags = local.common_tags
 }
 
 resource "aws_subnet" "subnet_public" {
   vpc_id     = aws_vpc.my_vpc.id
   cidr_block = var.cidr_subnet
+  tags = local.common_tags
 }
 
 resource "aws_route_table" "rtb_public" {
@@ -43,6 +59,7 @@ resource "aws_route_table" "rtb_public" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
   }
+  tags = local.common_tags
 }
 
 resource "aws_route_table_association" "rta_subnet_public" {
@@ -73,12 +90,15 @@ resource "aws_elb" "learn" {
   idle_timeout                = 400
   connection_draining         = true
   connection_draining_timeout = 400
+  tags = local.common_tags
 }
 
 
 resource "aws_instance" "ubuntu" {
+  count = (var.high_availability == true ? 3 : 1)
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = "t2.micro"
-  associate_public_ip_address = true
+  associate_public_ip_address = (count.index == 0 ? true : false)
   subnet_id                   = aws_subnet.subnet_public.id
+  tags = merge(local.common_tags)
 }
